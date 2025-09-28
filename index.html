@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Durga Puja 2025 Route with AI Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        #map { position: absolute; top: 0; bottom: 0; right: 0; left: 0; }
+        
+        /* Header */
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            width: 350px;
+            max-height: calc(100vh - 140px);
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            z-index: 1000;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .sidebar.collapsed {
+            transform: translateX(-320px);
+        }
+        .sidebar-toggle {
+            position: absolute;
+            right: -40px;
+            top: 20px;
+            width: 40px;
+            height: 40px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background: white;
+            color: #ff6b6b;
+            border-bottom: 3px solid #ff6b6b;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            padding: 20px;
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Pandal List */
+        .pandal-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #ff6b6b;
+        }
+        .pandal-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        .pandal-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .pandal-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .pandal-time {
+            font-size: 0.8rem;
+            color: #ff6b6b;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+
+        /* Chatbot */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 220px);
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: white;
+            flex-shrink: 0;
+        }
+        .message.user .message-avatar {
+            background: #ff6b6b;
+        }
+        .message.bot .message-avatar {
+            background: #6c757d;
+        }
+        .message-content {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 15px;
+            max-width: 80%;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .message.user .message-content {
+            background: #ff6b6b;
+            color: white;
+        }
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            outline: none;
+            font-size: 0.9rem;
+        }
+        .chat-input:focus {
+            border-color: #ff6b6b;
+        }
+        .chat-send {
+            padding: 12px 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+        .chat-send:hover {
+            background: #ff5252;
+        }
+        .chat-send:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Loading indicator */
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: calc(100vw - 40px);
+                left: 20px;
+            }
+            .sidebar.collapsed {
+                transform: translateX(calc(-100vw + 20px));
+            }
+            .header h1 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1><i class="fas fa-route"></i> Durga Puja 2025 Route Planner</h1>
+        <p>Barrackpore → South Kolkata | 2:00 PM - 10:00 PM</p>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-chevron-left" id="toggle-icon"></i>
+        </button>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('pandals')">
+                <i class="fas fa-map-marker-alt"></i> Pandals
+            </button>
+            <button class="tab" onclick="switchTab('chat')">
+                <i class="fas fa-robot"></i> AI Guide
+            </button>
+        </div>
+
+        <!-- Pandals Tab -->
+        <div class="tab-content active" id="pandals-tab">
+            <div id="pandal-list"></div>
+        </div>
+
+        <!-- Chat Tab -->
+        <div class="tab-content" id="chat-tab">
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message bot">
+                        <div class="message-avatar"><i class="fas fa-robot"></i></div>
+                        <div class="message-content">
+                            Hello! I'm your Durga Puja guide. Ask me anything about the pandals, routes, timings, or festival traditions! 🎭
+                        </div>
+                    </div>
+                </div>
+                <div class="typing-indicator" id="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="Ask about pandals, routes, timings..." onkeypress="handleChatKeyPress(event)">
+                    <button class="chat-send" id="chat-send" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    var map = L.map("map", {
+        center: [22.6, 88.4],
+        zoom: 11
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "Data © OpenStreetMap contributors"
+    }).addTo(map);
+
+    // Mistral AI API Configuration
+    const MISTRAL_API_KEY = 'ekRUzFZQh6nDfdYJfTclsWgqRSNT472L';
+    const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
+
+    // All Pujas with descriptions and time slots
+    var pujas = [
+        {
+            name: "Barrackpore",
+            coords: [22.7674, 88.37],
+            desc: "Starting point of the journey 🚩.",
+            time: "2:00 PM",
+            timeSlot: "2:00 – 3:30 pm",
+            category: "starting-point"
+        },
+        {
+            name: "Dum Dum Park Tarun Sangha",
+            coords: [22.6125, 88.4036],
+            desc: "Known for grand themed pandals and spectacular lighting.",
+            time: "2:00 PM",
+            timeSlot: "2:00 – 3:30 pm",
+            category: "dum-dum-cluster"
+        },
+        {
+            name: "Sreebhumi Sporting Club",
+            coords: [22.6103, 88.4047],
+            desc: "One of Kolkata's most famous — celebrity draws, huge crowd.",
+            time: "2:30 PM",
+            timeSlot: "2:00 – 3:30 pm",
+            category: "dum-dum-cluster"
+        },
+        {
+            name: "Lake Town Adhibasi Brinda",
+            coords: [22.6150, 88.4100],
+            desc: "Part of Dum Dum cluster, known for cultural themes.",
+            time: "3:00 PM",
+            timeSlot: "2:00 – 3:30 pm",
+            category: "dum-dum-cluster"
+        },
+        {
+            name: "Bagbazar Sarbojanin",
+            coords: [22.6042, 88.3685],
+            desc: "Heritage pujo, over 100 years old. Traditional Bengali charm.",
+            time: "3:30 PM",
+            timeSlot: "3:30 – 5:30 pm",
+            category: "north-heritage"
+        },
+        {
+            name: "Kumartuli Park",
+            coords: [22.6048, 88.3642],
+            desc: "Near idol-makers' hub. Always features artistic craftsmanship.",
+            time: "4:00 PM",
+            timeSlot: "3:30 – 5:30 pm",
+            category: "north-heritage"
+        },
+        {
+            name: "College Square",
+            coords: [22.5734, 88.3629],
+            desc: "Lakefront reflections 🌆, best viewed at dusk.",
+            time: "5:15 PM",
+            timeSlot: "3:30 – 5:30 pm",
+            category: "north-heritage"
+        },
+        {
+            name: "Ekdalia Evergreen",
+            coords: [22.5177, 88.3579],
+            desc: "Classic South Kolkata crowd-puller with traditional vibes.",
+            time: "5:30 PM",
+            timeSlot: "5:30 – 7:30 pm",
+            category: "south-main"
+        },
+        {
+            name: "Deshapriya Park",
+            coords: [22.5167, 88.351],
+            desc: "Huge open ground pandal — often record-breaking Durga idols.",
+            time: "6:15 PM",
+            timeSlot: "5:30 – 7:30 pm",
+            category: "south-main"
+        },
+        {
+            name: "Ballygunge Cultural Association",
+            coords: [22.5247, 88.3647],
+            desc: "Stylish South Kolkata pujo with unique modern themes.",
+            time: "7:00 PM",
+            timeSlot: "5:30 – 7:30 pm",
+            category: "south-main"
+        },
+        {
+            name: "Tridhara Sammilani",
+            coords: [22.5236, 88.3534],
+            desc: "Blend of tradition and innovation. Artistic installations.",
+            time: "7:30 PM",
+            timeSlot: "7:30 – 9:30 pm",
+            category: "south-highlights"
+        },
+        {
+            name: "Jodhpur Park",
+            coords: [22.5016, 88.3633],
+            desc: "Always experimental with themes, big South Kolkata draw.",
+            time: "8:30 PM",
+            timeSlot: "7:30 – 9:30 pm",
+            category: "south-highlights"
+        },
+        {
+            name: "Chetla Agrani",
+            coords: [22.5258, 88.3264],
+            desc: "Known for contemporary creativity and innovative designs.",
+            time: "9:00 PM",
+            timeSlot: "7:30 – 9:30 pm (Optional)",
+            category: "south-highlights"
+        },
+        {
+            name: "Gariahat Food Hub",
+            coords: [22.5050, 88.3650],
+            desc: "Dinner stop - Famous for Biryani and Rolls 🍽️",
+            time: "9:30 PM",
+            timeSlot: "9:30 – 10:00 pm",
+            category: "wrap-up"
+        }
+    ];    // Custom marker icons
+    var markerIcons = {
+        'starting-point': '🚩',
+        'dum-dum-cluster': '🎭',
+        'north-heritage': '🏛️',
+        'south-main': '⭐',
+        'south-highlights': '✨',
+        'wrap-up': '🍽️'
+    };
+
+    // Add markers with custom icons
+    var latlngs = [];
+    pujas.forEach(function(p, index){
+        var customIcon = L.divIcon({
+            html: `<div style="background: #ff6b6b; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${markerIcons[p.category] || '📍'}</div>`,
+            className: 'custom-marker',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+        
+        var marker = L.marker(p.coords, {icon: customIcon}).addTo(map);
+        marker.bindPopup(`
+            <div style="min-width: 200px;">
+                <h3 style="margin: 0 0 8px 0; color: #ff6b6b;">${p.name}</h3>
+                <p style="margin: 0 0 8px 0; font-size: 14px;">${p.desc}</p>
+                <div style="background: #f8f9fa; padding: 8px; border-radius: 5px; font-size: 12px;">
+                    <strong>⏰ ${p.timeSlot}</strong><br>
+                    📍 Stop #${index + 1}
+                </div>
+            </div>
+        `);
+        marker.bindTooltip(`${p.name} (${p.time})`, {sticky: true});
+        latlngs.push(p.coords);
+    });
+
+    // Draw route line with gradient colors
+    var routeColors = ['#ff6b6b', '#ff8e53', '#ff6b6b', '#ee5a24'];
+    L.polyline(latlngs, {
+        color: "#ff6b6b", 
+        weight: 5, 
+        opacity: 0.8,
+        dashArray: '10, 5'
+    }).addTo(map);
+
+    // Initialize sidebar with pandal list
+    function initializePandalList() {
+        const pandalList = document.getElementById('pandal-list');
+        const timeSlots = {
+            "2:00 – 3:30 pm": "Dum Dum Cluster",
+            "3:30 – 5:30 pm": "North Kolkata Heritage", 
+            "5:30 – 7:30 pm": "South Kolkata Main Circuit",
+            "7:30 – 9:30 pm": "South Highlights",
+            "9:30 – 10:00 pm": "Wrap-up & Return"
+        };
+
+        Object.entries(timeSlots).forEach(([timeSlot, sectionName]) => {
+            const sectionPandals = pujas.filter(p => p.timeSlot.includes(timeSlot.split(' –')[0]));
+            if (sectionPandals.length > 0) {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.innerHTML = `
+                    <h4 style="color: #ff6b6b; margin: 20px 0 10px 0; font-size: 1rem; border-bottom: 2px solid #ffe6e6; padding-bottom: 5px;">
+                        ${sectionName}
+                    </h4>
+                `;
+                pandalList.appendChild(sectionDiv);
+
+                sectionPandals.forEach((pandal, index) => {
+                    const pandalDiv = document.createElement('div');
+                    pandalDiv.className = 'pandal-item';
+                    pandalDiv.innerHTML = `
+                        <div class="pandal-name">${markerIcons[pandal.category]} ${pandal.name}</div>
+                        <div class="pandal-desc">${pandal.desc}</div>
+                        <div class="pandal-time">${pandal.time} • ${pandal.timeSlot}</div>
+                    `;
+                    pandalDiv.onclick = () => {
+                        map.setView(pandal.coords, 15);
+                        // Find and open the marker popup
+                        map.eachLayer(layer => {
+                            if (layer instanceof L.Marker && 
+                                layer.getLatLng().lat === pandal.coords[0] && 
+                                layer.getLatLng().lng === pandal.coords[1]) {
+                                layer.openPopup();
+                            }
+                        });
+                    };
+                    pandalList.appendChild(pandalDiv);
+                });
+            }
+        });
+    }
+
+    // Sidebar functions
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const icon = document.getElementById('toggle-icon');
+        sidebar.classList.toggle('collapsed');
+        icon.className = sidebar.classList.contains('collapsed') ? 
+            'fas fa-chevron-right' : 'fas fa-chevron-left';
+    }
+
+    function switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
+
+    // Chat functions
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        if (!message) return;
+
+        addMessage(message, 'user');
+        input.value = '';
+        document.getElementById('chat-send').disabled = true;
+        showTypingIndicator();
+
+        try {
+            const response = await fetch(MISTRAL_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${MISTRAL_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: 'mistral-small-latest',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `You are a knowledgeable Durga Puja guide for Kolkata. You know about the pandals in this route: ${pujas.map(p => `${p.name} (${p.timeSlot}): ${p.desc}`).join('; ')}. 
+                            
+                            Provide helpful, enthusiastic responses about Durga Puja pandals, Bengali culture, travel tips, timings, and festival traditions. Keep responses concise but informative. Use emojis when appropriate.
+                            
+                            Today's route is: Barrackpore → Dum Dum → North Kolkata → South Kolkata, from 2:00 PM to 10:00 PM.`
+                        },
+                        {
+                            role: 'user',
+                            content: message
+                        }
+                    ],
+                    max_tokens: 500,
+                    temperature: 0.7
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const botResponse = data.choices[0].message.content;
+            
+            hideTypingIndicator();
+            addMessage(botResponse, 'bot');
+        } catch (error) {
+            hideTypingIndicator();
+            addMessage(`Sorry, I couldn't process your request right now. Please try again later. 😔\n\nError: ${error.message}`, 'bot');
+        } finally {
+            document.getElementById('chat-send').disabled = false;
+        }
+    }
+
+    function addMessage(content, sender) {
+        const messagesContainer = document.getElementById('chat-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        
+        const avatar = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+        messageDiv.innerHTML = `
+            <div class="message-avatar">${avatar}</div>
+            <div class="message-content">${content}</div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+        document.getElementById('typing-indicator').style.display = 'flex';
+        const messagesContainer = document.getElementById('chat-messages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+        document.getElementById('typing-indicator').style.display = 'none';
+    }
+
+    function handleChatKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    // Initialize the app
+    initializePandalList();
+
+</script>
+</html>
